@@ -13,11 +13,12 @@ if [ ! -x "$SKOPEO" ]; then
   SKOPEO="skopeo"
 fi
 
+ARCH="${ARCH:-$(dpkg --print-architecture 2>/dev/null || go env GOARCH)}"
 VERSION=$(yq -r '.version' rockcraft.yaml)
-ROCK_FILE="secure-token-service_${VERSION}_amd64.rock"
+ROCK_FILE="secure-token-service_${VERSION}_${ARCH}.rock"
 
 rockcraft clean
-rockcraft pack -v
+rockcraft pack -v --platform "${ARCH}"
 
 echo "$IMAGE built"
 

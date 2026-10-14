@@ -9,6 +9,7 @@ description: >
 license: Apache-2.0
 platforms:
   amd64: null
+  arm64: null
 services:
   secure-token-service:
     override: replace
@@ -26,11 +27,10 @@ parts:
     build-packages:
       - make
       - git
-    override-build: >
+    override-build: |
+      export GOARCH="${CRAFT_ARCH_BUILD_FOR}"
       make build
-
-      install -D -m755 ./bin/app
-      ${CRAFT_PART_INSTALL}/opt/secure-token-service/bin/app
+      install -D -m755 ./bin/app ${CRAFT_PART_INSTALL}/opt/secure-token-service/bin/app
     organize:
       opt/secure-token-service/bin/app: usr/bin/app
       etc/ssl/certs/ca-certificates.crt: etc/ssl/certs/ca-certificates.crt
