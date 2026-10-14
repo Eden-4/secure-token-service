@@ -14,6 +14,13 @@ if [ ! -x "$SKOPEO" ]; then
 fi
 
 ARCH="${ARCH:-$(dpkg --print-architecture 2>/dev/null || go env GOARCH)}"
+case "$ARCH" in
+  amd64|arm64) ;;
+  *)
+    echo "unsupported rock arch: $ARCH" >&2
+    exit 1
+    ;;
+esac
 VERSION=$(yq -r '.version' rockcraft.yaml)
 ROCK_FILE="secure-token-service_${VERSION}_${ARCH}.rock"
 

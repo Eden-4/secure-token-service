@@ -798,7 +798,7 @@ export $(cat .env | xargs)
 #### Step 4: Build and Run
 
 ```bash
-# Build the binary for the host architecture (outputs bin/app)
+# Build the binary for the host OS/architecture (outputs bin/app)
 make build
 
 # Build binaries for all supported architectures (linux/amd64, linux/arm64, linux/riscv64)
@@ -816,6 +816,13 @@ IMAGE=secure-token-service:dev ARCH=amd64 ./build.sh
 # Or combine
 make run
 ```
+
+> **Multi-Architecture Notes**:
+> - `riscv64` is supported at the Go binary level (`make build-all`, `GOOS=linux GOARCH=riscv64 make build`), whereas Rock container images are built and published only for `amd64` and `arm64`.
+> - Multi-architecture release candidate promotion (`<version>-candidate` $\rightarrow$ `<version>` and `stable`) requires `skopeo copy --all` in the centralized workflow ([`canonical/identity-team#156`](https://github.com/canonical/identity-team/pull/156)). Verify published or promoted multi-architecture manifest lists with:
+>   ```bash
+>   docker manifest inspect ghcr.io/canonical/secure-token-service:<tag>
+>   ```
 
 #### Step 5: Development Workflow
 

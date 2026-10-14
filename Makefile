@@ -1,8 +1,9 @@
 # Makefile for Session Service (Janus)
 
-.PHONY: all build build-all build-all-archs test clean run install-deps proto
+.PHONY: all build build-all test clean run install-deps proto
 
 # Variables
+GO?=go
 GO_BIN?=app
 BINARY_PATH?=bin/$(GO_BIN)
 BINARY_ARCHS?=amd64 arm64 riscv64
@@ -10,9 +11,8 @@ CMD_PATH=./cmd/sts
 PROTO_PATH=api/proto/v1
 GOFLAGS?=-ldflags=-w -ldflags=-s -a -buildvcs
 CGO_ENABLED?=0
-GOOS?=linux
-GOARCH?=$(if $(CRAFT_ARCH_BUILD_FOR),$(CRAFT_ARCH_BUILD_FOR),$(shell $(GO) env GOARCH))
-GO?=go
+GOOS?=$(shell $(GO) env GOOS)
+GOARCH?=$(shell $(GO) env GOARCH)
 GO_TEST_PARALLEL?=10
 
 # Podman support - set DOCKER_HOST for testcontainers
@@ -95,9 +95,6 @@ build-all:
 		echo "Build complete: bin/$(GO_BIN)-linux-$$arch"; \
 	done
 .PHONY: build-all
-
-build-all-archs: build-all
-.PHONY: build-all-archs
 
 # Run the service
 run: build

@@ -7,16 +7,17 @@ This specification defines how the Secure Token Service compiles Go binaries for
 ## ADDED Requirements
 
 ### Requirement: Three-architecture Go binary compilation
-The build system (`Makefile` and `.github/workflows/unittest.yaml`) SHALL compile static Go binaries (`CGO_ENABLED=0`) for `linux/amd64`, `linux/arm64`, and `linux/riscv64` on every pull request and branch push.
+The build system (`Makefile` and `.github/workflows/unittest.yaml`) SHALL compile static Go binaries (`CGO_ENABLED=0`) for `linux/amd64`, `linux/arm64`, and `linux/riscv64` and verify their ELF target architectures (`x86-64`, `aarch64`, and `RISC-V`) on every pull request and branch push.
 
 #### Scenario: Pull request compiles binaries for amd64, arm64, and riscv64
 - **WHEN** `.github/workflows/unittest.yaml` runs on a pull request or push event
 - **THEN** the workflow runs `make build-all` and compiles `./cmd/sts` for `amd64`, `arm64`, and `riscv64`
-- **AND** the step exits with code `0`
+- **AND** the workflow verifies each binary's ELF architecture with `file` (`x86-64`, `aarch64`, `RISC-V`)
+- **AND** the steps exit with code `0`
 
 #### Scenario: Architecture-specific compilation error fails unit test workflow
-- **WHEN** a code change introduces a package or syscall that fails to compile for `amd64`, `arm64`, or `riscv64`
-- **THEN** the `make build-all` step exits with a non-zero code
+- **WHEN** a code change introduces a package or syscall that fails to compile for `amd64`, `arm64`, or `riscv64` or produces an unexpected ELF target
+- **THEN** the `make build-all` or binary verification step exits with a non-zero code
 - **AND** the workflow blocks the pull request before container image builds start
 
 ### Requirement: Two-architecture container image and Rockcraft definition
@@ -32,9 +33,9 @@ The container packaging configuration (`rockcraft.yaml`, `Dockerfile`, `build.sh
 - **THEN** the `go-build` part compiles a static `linux/arm64` ELF binary at `/usr/bin/app`
 - **AND** Rockcraft outputs `secure-token-service_<version>_arm64.rock`
 
-#### Scenario: Local build script detects host architecture dynamically
+#### Scenario: Local build script detects and validates host architecture dynamically
 - **WHEN** a developer runs `./build.sh` on an `amd64` or `arm64` Linux host
-- **THEN** `build.sh` resolves the host architecture via `dpkg --print-architecture` (or `ARCH` override)
+- **THEN** `build.sh` resolves the host architecture via `dpkg --print-architecture` (or `ARCH` override), validates that `ARCH` is `amd64` or `arm64`, and rejects unsupported rock architectures (such as `riscv64`) with a non-zero exit code
 - **AND** `build.sh` loads `secure-token-service_<version>_<arch>.rock` without manual script edits
 
 ### Requirement: Dynamic CI rock build matrix for supported image architectures
