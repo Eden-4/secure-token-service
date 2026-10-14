@@ -798,11 +798,20 @@ export $(cat .env | xargs)
 #### Step 4: Build and Run
 
 ```bash
-# Build the binary
+# Build the binary for the host architecture (outputs bin/app)
 make build
 
+# Build binaries for all supported architectures (linux/amd64, linux/arm64, linux/riscv64)
+make build-all
+
+# Build the binary for a specific target architecture
+GOARCH=arm64 make build
+
+# Pack and load a Rock container image for a supported image architecture (amd64 or arm64)
+IMAGE=secure-token-service:dev ARCH=amd64 ./build.sh
+
 # Run the service
-./bin/sts serve
+./bin/app serve
 
 # Or combine
 make run
