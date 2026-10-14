@@ -56,11 +56,11 @@ internal/db/mocks/
 # Vendor
 vendor/
 
-# Archify build, check, and test artifacts
-.archify/**/visual-check/*light*.png
+# Archify intermediate and extra artifacts
+.archify/**/*.html
 .archify/**/*.browser-check.json
 .archify/**/*.delivery.json
-.archify/**/*.finalize.json
-.archify/**/*.finalize-summary.json
+.archify/**/*.finalize*.json
 .archify/**/visual-check/*.json
-.archify/**/visual-check/*.html
+.archify/**/visual-check/*light*.png
+.archify/**/visual-check/*1440x900*.png

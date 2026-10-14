@@ -4,10 +4,12 @@
 package config
 
 import (
+	"strings"
+
 	"github.com/kelseyhightower/envconfig"
 )
 
-// Config holds configuration for the Session Service (Janus).
+// Config holds configuration for the Secure Token Service (STS).
 type Config struct {
 	// Database
 	DatabaseURL string `envconfig:"DATABASE_URL" default:"postgres://localhost:5432/sts?sslmode=disable"`
@@ -49,6 +51,9 @@ type Config struct {
 	UbuntuOneRealm      string `envconfig:"UBUNTU_ONE_REALM" default:""`
 	DefaultAuthProvider string `envconfig:"DEFAULT_AUTH_PROVIDER" default:"oidc"`
 
+	// Upstream Hydra JWKS Configuration
+	HydraJWKSURL string `envconfig:"HYDRA_JWKS_URL" default:""`
+
 	// JWKS Caching
 	JWKSCacheTTL int `envconfig:"JWKS_CACHE_TTL" default:"600"` // seconds (10 minutes)
 
@@ -61,6 +66,14 @@ type Config struct {
 	TracingSampleRate float64 `envconfig:"TRACING_SAMPLE_RATE" default:"0.1"`
 	ServiceName       string  `envconfig:"SERVICE_NAME" default:"secure-token-service"`
 	ServiceVersion    string  `envconfig:"SERVICE_VERSION" default:"1.0.0"`
+}
+
+// HydraJWKSEndpoint returns the configured Hydra JWKS URL or derives it from OIDCProviderURL.
+func (c *Config) HydraJWKSEndpoint() string {
+	if c.HydraJWKSURL != "" {
+		return c.HydraJWKSURL
+	}
+	return strings.TrimSuffix(c.OIDCProviderURL, "/") + "/.well-known/jwks.json"
 }
 
 // Load reads configuration from environment variables.
