@@ -17,6 +17,9 @@ jobs:
       - name: Run vulnerability check
         run: make govulncheck
 
+      - name: Build binaries for all supported architectures
+        run: make build-all
+
       - name: Install Podman
         uses: redhat-actions/podman-install@main
 

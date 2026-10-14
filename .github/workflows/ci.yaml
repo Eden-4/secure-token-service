@@ -19,11 +19,28 @@ jobs:
     uses: ./.github/workflows/openspec-check.yaml
   unit-test:
     uses: ./.github/workflows/unittest.yaml
+  get-architectures:
+    runs-on: ubuntu-latest
+    outputs:
+      architectures: ${{ steps.set-archs.outputs.architectures }}
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+      - name: Get Architectures
+        id: set-archs
+        run: |
+          archs=$(yq -o=json -I=0 '.platforms | keys' rockcraft.yaml)
+          echo "architectures=$archs" >> "$GITHUB_OUTPUT"
+
   build:
-    needs: [ unit-test ]
+    needs: [ unit-test, get-architectures ]
+    strategy:
+      matrix:
+        architecture: ${{ fromJson(needs.get-architectures.outputs.architectures) }}
     uses: canonical/identity-team/.github/workflows/_rock-build.yaml@fc85af7448538c473be450dc2c8ec5d158ea0d15 # v1.17.0
     with:
+      architecture: ${{ matrix.architecture }}
       structure-tests-enabled: true
+
   gh-publish-branch:
     permissions:
       packages: write
@@ -31,8 +48,6 @@ jobs:
     if: ${{ github.ref == 'refs/heads/main' }}
     needs: [ build, unit-test ]
     uses: canonical/identity-team/.github/workflows/_rock-gh-publish.yaml@fc85af7448538c473be450dc2c8ec5d158ea0d15 # v1.17.0
-    with:
-      rock: ${{ needs.build.outputs.rock }}
 
   gh-publish-candidate:
     permissions:
@@ -42,7 +57,6 @@ jobs:
     needs: [ build, unit-test ]
     uses: canonical/identity-team/.github/workflows/_rock-gh-publish.yaml@fc85af7448538c473be450dc2c8ec5d158ea0d15 # v1.17.0
     with:
-      rock: ${{ needs.build.outputs.rock }}
       candidate: true
 
   scan:
