@@ -1,14 +1,17 @@
 # Makefile for Session Service (Janus)
 
-.PHONY: all build test clean run install-deps proto
+.PHONY: all build build-all build-all-archs test clean run install-deps proto
 
 # Variables
 GO_BIN?=app
-BINARY_PATH=bin/$(GO_BIN)
+BINARY_PATH?=bin/$(GO_BIN)
+BINARY_ARCHS?=amd64 arm64 riscv64
 CMD_PATH=./cmd/sts
 PROTO_PATH=api/proto/v1
 GOFLAGS?=-ldflags=-w -ldflags=-s -a -buildvcs
 CGO_ENABLED?=0
+GOOS?=linux
+GOARCH?=$(if $(CRAFT_ARCH_BUILD_FOR),$(CRAFT_ARCH_BUILD_FOR),$(shell $(GO) env GOARCH))
 GO?=go
 GO_TEST_PARALLEL?=10
 
@@ -77,11 +80,24 @@ govulncheck: vendor
 
 # Build the binary
 build:
-	@echo "Building $(GO_BIN)..."
+	@echo "Building $(GO_BIN) ($(GOOS)/$(GOARCH))..."
 	@mkdir -p bin
-	$(GO) build -o $(BINARY_PATH) $(CMD_PATH)
-	@echo "Build complete: $(CMD_PATH)"
+	CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) GOARCH=$(GOARCH) $(GO) build -o $(BINARY_PATH) $(CMD_PATH)
+	@echo "Build complete: $(BINARY_PATH)"
 .PHONY: build
+
+# Build binaries for all supported architectures (amd64, arm64, riscv64)
+build-all:
+	@mkdir -p bin
+	@for arch in $(BINARY_ARCHS); do \
+		echo "Building $(GO_BIN) (linux/$$arch)..."; \
+		CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GOARCH=$$arch $(GO) build -o bin/$(GO_BIN)-linux-$$arch $(CMD_PATH) || exit 1; \
+		echo "Build complete: bin/$(GO_BIN)-linux-$$arch"; \
+	done
+.PHONY: build-all
+
+build-all-archs: build-all
+.PHONY: build-all-archs
 
 # Run the service
 run: build
