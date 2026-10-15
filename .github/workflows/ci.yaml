@@ -19,16 +19,20 @@ jobs:
     uses: ./.github/workflows/openspec-check.yaml
   unit-test:
     uses: ./.github/workflows/unittest.yaml
+
   get-architectures:
     runs-on: ubuntu-latest
     outputs:
-      architectures: ${{ steps.set-archs.outputs.architectures }}
+      architectures: ${{ steps.parse.outputs.architectures }}
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
-      - name: Get Architectures
-        id: set-archs
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Parse platforms from rockcraft.yaml
+        id: parse
         run: |
           archs=$(yq -o=json -I=0 '.platforms | keys' rockcraft.yaml)
+          echo "Found architectures: $archs"
           echo "architectures=$archs" >> "$GITHUB_OUTPUT"
 
   build:
@@ -38,8 +42,8 @@ jobs:
         architecture: ${{ fromJson(needs.get-architectures.outputs.architectures) }}
     uses: canonical/identity-team/.github/workflows/_rock-build.yaml@fc85af7448538c473be450dc2c8ec5d158ea0d15 # v1.17.0
     with:
-      architecture: ${{ matrix.architecture }}
       structure-tests-enabled: true
+      architecture: ${{ matrix.architecture }}
 
   gh-publish-branch:
     permissions:
