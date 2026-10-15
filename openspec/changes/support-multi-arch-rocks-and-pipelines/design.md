@@ -66,10 +66,10 @@ flowchart TD
 
 ### Decision 4: Parameterize Local and Container Build Files (`Makefile`, `Dockerfile`, `build.sh`, `skaffold.yaml`)
 - **Choice**:
-  - In `rockcraft.yaml`, add `arm64: null` to `platforms` and set `export GOARCH="${CRAFT_ARCH_BUILD_FOR}"` before `make build`.
+  - In `rockcraft.yaml`, add `arm64: null` to `platforms` and set `export GOOS=linux`, `export GOARCH="${CRAFT_ARCH_BUILD_FOR}"`, and `export CGO_ENABLED=0` before `make build`.
   - In `Makefile`, default `GOOS` and `GOARCH` to the host environment (`$(shell $(GO) env GOOS)` and `$(shell $(GO) env GOARCH)`), pass `CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) GOARCH=$(GOARCH)` to `$(GO) build`, and add `build-all` (`amd64`, `arm64`, `riscv64`).
   - In `Dockerfile`, accept `ARG TARGETOS=linux` and `ARG TARGETARCH=amd64` and pass `GOOS=${TARGETOS} GOARCH=${TARGETARCH}` to `go build`.
-  - In `build.sh`, detect `ARCH="${ARCH:-$(dpkg --print-architecture 2>/dev/null || go env GOARCH)}"`, validate that `ARCH` is `amd64` or `arm64`, and set `ROCK_FILE="secure-token-service_${VERSION}_${ARCH}.rock"`.
+  - In `build.sh`, default `IMAGE="${IMAGE:-secure-token-service:dev}"`, detect `ARCH` via `dpkg --print-architecture` with fallback to `go env GOARCH`, validate that `ARCH` is `amd64` or `arm64`, and set `ROCK_FILE="secure-token-service_${VERSION}_${ARCH}.rock"`.
   - In `skaffold.yaml`, set `platforms: ["linux/amd64", "linux/arm64"]`.
 - **Rationale**: Aligns all container tooling on `amd64` and `arm64` while `Makefile` supports host-native builds and compiling Linux binaries for `amd64`, `arm64`, and `riscv64`.
 - **Alternatives Considered**:
@@ -77,9 +77,9 @@ flowchart TD
 
 ## Upstream Interface Requirements (`canonical/identity-team`)
 
-1. **`_rock-promote.yaml` Multi-Architecture Copy ([`canonical/identity-team#156`](https://github.com/canonical/identity-team/pull/156))**:
-   - `_rock-promote.yaml` currently runs `rockcraft.skopeo --insecure-policy copy "$source_image" "docker://ghcr.io/${{ github.repository }}:${tag}"`.
-   - Without `--all` (or `--multi-arch=all`), `skopeo copy` copies only the `amd64` manifest instead of the full manifest list. Upstream PR [`canonical/identity-team#156`](https://github.com/canonical/identity-team/pull/156) adds `--all` to `skopeo copy`.
+1. **`_rock-promote.yaml` Multi-Architecture Copy ([`canonical/identity-team#156`](https://github.com/canonical/identity-team/pull/156), `v1.17.1`)**:
+   - `_rock-promote.yaml` runs `rockcraft.skopeo --insecure-policy copy --all "$source_image" "docker://ghcr.io/${{ github.repository }}:${tag}"` as of `v1.17.1` (`6e3d618fb7650a26b7a2254a15fef1d28373bd9d`).
+   - `.github/workflows/ci.yaml` pins `canonical/identity-team` reusable workflows to `v1.17.1` so multi-architecture manifest lists are preserved intact during candidate promotion.
 
 ## Database Schema Modifications
 

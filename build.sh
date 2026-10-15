@@ -13,7 +13,9 @@ if [ ! -x "$SKOPEO" ]; then
   SKOPEO="skopeo"
 fi
 
-ARCH="${ARCH:-$(dpkg --print-architecture 2>/dev/null || go env GOARCH)}"
+IMAGE="${IMAGE:-secure-token-service:dev}"
+ARCH="${ARCH:-$(dpkg --print-architecture 2>/dev/null || true)}"
+: "${ARCH:=$(go env GOARCH 2>/dev/null || true)}"
 case "$ARCH" in
   amd64|arm64) ;;
   *)

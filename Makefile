@@ -9,7 +9,6 @@ BINARY_PATH?=bin/$(GO_BIN)
 BINARY_ARCHS?=amd64 arm64 riscv64
 CMD_PATH=./cmd/sts
 PROTO_PATH=api/proto/v1
-GOFLAGS?=-ldflags=-w -ldflags=-s -a -buildvcs
 CGO_ENABLED?=0
 GOOS?=$(shell $(GO) env GOOS)
 GOARCH?=$(shell $(GO) env GOARCH)
@@ -98,6 +97,8 @@ build-all:
 
 # Run the service
 run: build
+	./$(BINARY_PATH) serve
+
 # Clean build artifacts
 clean:
 	@echo "Cleaning..."

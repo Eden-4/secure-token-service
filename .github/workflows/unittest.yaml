@@ -25,7 +25,7 @@ jobs:
           file bin/app-linux-amd64 | grep -q 'x86-64'
           file bin/app-linux-arm64 | grep -q 'aarch64'
           file bin/app-linux-riscv64 | grep -q 'RISC-V'
-          for b in $(ls bin/app-linux-*); do
+          for b in bin/app-linux-*; do
             file "$b" | grep -Eq 'x86-64|aarch64|RISC-V' || exit 1
           done
 

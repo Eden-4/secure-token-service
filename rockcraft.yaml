@@ -28,7 +28,9 @@ parts:
       - make
       - git
     override-build: |
+      export GOOS=linux
       export GOARCH="${CRAFT_ARCH_BUILD_FOR}"
+      export CGO_ENABLED=0
       make build
       install -D -m755 ./bin/app ${CRAFT_PART_INSTALL}/opt/secure-token-service/bin/app
     organize:
