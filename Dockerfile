@@ -10,8 +10,11 @@ RUN go mod download
 # Copy source code
 COPY . .
 
+ARG TARGETOS=linux
+ARG TARGETARCH=amd64
+
 # Build the application
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o sts ./cmd/sts
+RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -a -installsuffix cgo -o sts ./cmd/sts
 
 # Runtime stage
 FROM gcr.io/distroless/static-debian13:nonroot

@@ -1,15 +1,17 @@
 # Makefile for Session Service (Janus)
 
-.PHONY: all build test clean run install-deps proto
+.PHONY: all build build-all test clean run install-deps proto
 
 # Variables
+GO?=go
 GO_BIN?=app
-BINARY_PATH=bin/$(GO_BIN)
+BINARY_PATH?=bin/$(GO_BIN)
+BINARY_ARCHS?=amd64 arm64 riscv64
 CMD_PATH=./cmd/sts
 PROTO_PATH=api/proto/v1
-GOFLAGS?=-ldflags=-w -ldflags=-s -a -buildvcs
 CGO_ENABLED?=0
-GO?=go
+GOOS?=$(shell $(GO) env GOOS)
+GOARCH?=$(shell $(GO) env GOARCH)
 GO_TEST_PARALLEL?=10
 
 # Podman support - set DOCKER_HOST for testcontainers
@@ -77,14 +79,26 @@ govulncheck: vendor
 
 # Build the binary
 build:
-	@echo "Building $(GO_BIN)..."
+	@echo "Building $(GO_BIN) ($(GOOS)/$(GOARCH))..."
 	@mkdir -p bin
-	$(GO) build -o $(BINARY_PATH) $(CMD_PATH)
-	@echo "Build complete: $(CMD_PATH)"
+	CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) GOARCH=$(GOARCH) $(GO) build -o $(BINARY_PATH) $(CMD_PATH)
+	@echo "Build complete: $(BINARY_PATH)"
 .PHONY: build
+
+# Build binaries for all supported architectures (amd64, arm64, riscv64)
+build-all:
+	@mkdir -p bin
+	@for arch in $(BINARY_ARCHS); do \
+		echo "Building $(GO_BIN) (linux/$$arch)..."; \
+		CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GOARCH=$$arch $(GO) build -o bin/$(GO_BIN)-linux-$$arch $(CMD_PATH) || exit 1; \
+		echo "Build complete: bin/$(GO_BIN)-linux-$$arch"; \
+	done
+.PHONY: build-all
 
 # Run the service
 run: build
+	./$(BINARY_PATH) serve
+
 # Clean build artifacts
 clean:
 	@echo "Cleaning..."

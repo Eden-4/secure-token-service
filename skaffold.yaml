@@ -16,7 +16,7 @@ build:
           - go.mod
           - go.sum
           - Makefile
-    platforms: ["linux/amd64"]
+    platforms: ["linux/amd64", "linux/arm64"]
 manifests:
   kustomize:
     paths:

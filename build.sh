@@ -13,11 +13,21 @@ if [ ! -x "$SKOPEO" ]; then
   SKOPEO="skopeo"
 fi
 
+IMAGE="${IMAGE:-secure-token-service:dev}"
+ARCH="${ARCH:-$(dpkg --print-architecture 2>/dev/null || true)}"
+: "${ARCH:=$(go env GOARCH 2>/dev/null || true)}"
+case "$ARCH" in
+  amd64|arm64) ;;
+  *)
+    echo "unsupported rock arch: $ARCH" >&2
+    exit 1
+    ;;
+esac
 VERSION=$(yq -r '.version' rockcraft.yaml)
-ROCK_FILE="secure-token-service_${VERSION}_amd64.rock"
+ROCK_FILE="secure-token-service_${VERSION}_${ARCH}.rock"
 
 rockcraft clean
-rockcraft pack -v
+rockcraft pack -v --platform "${ARCH}"
 
 echo "$IMAGE built"
 
