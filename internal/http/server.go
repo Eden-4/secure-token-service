@@ -85,13 +85,17 @@ const defaultAuthProvider = "oidc"
 
 const defaultSessionExpiry = 24 * time.Hour
 
+// sessionLifetime returns the configured session lifetime, or the default when unset.
+func (s *Server) sessionLifetime() time.Duration {
+	if s.sessionExpiry <= 0 {
+		return defaultSessionExpiry
+	}
+	return s.sessionExpiry
+}
+
 // sessionMaxAge returns the session lifetime in seconds used to validate session cookies.
 func (s *Server) sessionMaxAge() int {
-	expiry := s.sessionExpiry
-	if expiry <= 0 {
-		expiry = defaultSessionExpiry
-	}
-	return int(expiry.Seconds())
+	return int(s.sessionLifetime().Seconds())
 }
 
 var fallbackLogger = zap.NewNop()
@@ -493,7 +497,8 @@ func (s *Server) handleCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 6. Set Session Cookie
-	if err := s.cookieManager.SetSessionCookie(w, r, sessionID, sess.ExpiresAt); err != nil {
+	// The cookie outlives the upstream access token; the session store enforces expiry.
+	if err := s.cookieManager.SetSessionCookie(w, r, sessionID, now.Add(s.sessionLifetime())); err != nil {
 		s.logger(r.Context()).Error("failed to set session cookie", zap.Error(err))
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
@@ -603,11 +608,7 @@ func (s *Server) handleOpenIDCallback(w http.ResponseWriter, r *http.Request) {
 	// 4. Create session
 	sessionID := uuid.New().String()
 	now := time.Now()
-	expiryDuration := s.sessionExpiry
-	if expiryDuration <= 0 {
-		expiryDuration = defaultSessionExpiry
-	}
-	expiresAt := now.Add(expiryDuration)
+	expiresAt := now.Add(s.sessionLifetime())
 
 	sess := &session.Session{
 		SessionID: sessionID,
