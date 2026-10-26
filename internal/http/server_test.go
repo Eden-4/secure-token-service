@@ -1300,7 +1300,7 @@ func TestHandleLogout(t *testing.T) {
 	// Setup mock - Decode will fail (no valid cookie), which is OK
 	// The handler will still clear the cookie even if decode fails
 	cookieManager.EXPECT().
-		Decode("session_id", "test-session-value").
+		Decode("session_id", "test-session-value", gomock.Any()).
 		Return("test-session-id", nil).
 		AnyTimes() // May or may not be called depending on cookie presence
 

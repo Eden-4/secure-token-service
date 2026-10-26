@@ -39,11 +39,11 @@ func TestExchangeSession(t *testing.T) {
 	keyManager := NewMockKeyManager(ctrl)
 
 	// Create server
-	server := NewServer(sessionStore, keyManager, cookieManager, "test-issuer", "test-audience", 3600, nil)
+	server := NewServer(sessionStore, keyManager, cookieManager, "test-issuer", "test-audience", 3600, nil, WithSessionExpiry(24*time.Hour))
 
 	// Setup mock expectations
 	cookieManager.EXPECT().
-		Decode("session_id", "test-cookie-value").
+		Decode("session_id", "test-cookie-value", 86400).
 		Return("session-123", nil)
 
 	sessionStore.EXPECT().
@@ -95,7 +95,7 @@ func TestExchangeSession_WithOpenIDClaims(t *testing.T) {
 
 	// Setup mock expectations
 	cookieManager.EXPECT().
-		Decode("session_id", "openid-cookie").
+		Decode("session_id", "openid-cookie", gomock.Any()).
 		Return("session-openid-123", nil)
 
 	sessionStore.EXPECT().

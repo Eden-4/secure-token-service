@@ -83,6 +83,17 @@ type Server struct {
 
 const defaultAuthProvider = "oidc"
 
+const defaultSessionExpiry = 24 * time.Hour
+
+// sessionMaxAge returns the session lifetime in seconds used to validate session cookies.
+func (s *Server) sessionMaxAge() int {
+	expiry := s.sessionExpiry
+	if expiry <= 0 {
+		expiry = defaultSessionExpiry
+	}
+	return int(expiry.Seconds())
+}
+
 var fallbackLogger = zap.NewNop()
 
 // logger returns the zap logger from observability, or creates a new one if not available
@@ -594,7 +605,7 @@ func (s *Server) handleOpenIDCallback(w http.ResponseWriter, r *http.Request) {
 	now := time.Now()
 	expiryDuration := s.sessionExpiry
 	if expiryDuration <= 0 {
-		expiryDuration = 24 * time.Hour
+		expiryDuration = defaultSessionExpiry
 	}
 	expiresAt := now.Add(expiryDuration)
 
@@ -637,7 +648,7 @@ func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("session_id")
 	if err == nil {
 		// Attempt to decode to get session ID for deletion from store
-		if sessionID, err := s.cookieManager.Decode("session_id", cookie.Value); err == nil {
+		if sessionID, err := s.cookieManager.Decode("session_id", cookie.Value, s.sessionMaxAge()); err == nil {
 			if err := s.sessionStore.Delete(r.Context(), sessionID); err != nil {
 				s.logger(r.Context()).Error("failed to delete session",
 					zap.String("session_id", sessionID),

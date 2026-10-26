@@ -8,7 +8,7 @@ import "time"
 
 // Cookie configuration constants
 const (
-	// CookieMaxAge is the maximum age for session and OIDC state cookies (10 minutes)
+	// CookieMaxAge is the maximum age for OIDC state and nonce cookies (10 minutes)
 	CookieMaxAge = 600 // seconds
 
 	// CookieName is the name of the session cookie
