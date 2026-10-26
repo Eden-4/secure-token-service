@@ -14,6 +14,7 @@ import (
 
 	stsv1 "github.com/canonical/secure-token-service/api/proto/v1"
 	"github.com/canonical/secure-token-service/internal/auth"
+	"github.com/canonical/secure-token-service/internal/constants"
 	"github.com/canonical/secure-token-service/internal/observability"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -35,10 +36,12 @@ func WithTokenVerifier(verifier TokenVerifier) ServerOption {
 	}
 }
 
-// WithSessionExpiry sets the session cookie lifetime; zero leaves cookie age unchecked.
+// WithSessionExpiry sets the session cookie lifetime; non-positive values keep the default.
 func WithSessionExpiry(expiry time.Duration) ServerOption {
 	return func(s *Server) {
-		s.sessionMaxAge = int(expiry.Seconds())
+		if expiry > 0 {
+			s.sessionMaxAge = int(expiry.Seconds())
+		}
 	}
 }
 
@@ -76,6 +79,7 @@ func NewServer(store SessionStore, km KeyManager, cm CookieManager, issuer, audi
 		jwtIssuer:     issuer,
 		jwtAudience:   audience,
 		jwtExpiry:     expiry,
+		sessionMaxAge: int(constants.DefaultSessionExpiry.Seconds()),
 		observability: obs,
 	}
 	for _, opt := range opts {

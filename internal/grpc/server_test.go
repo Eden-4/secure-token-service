@@ -78,6 +78,24 @@ func TestExchangeSession(t *testing.T) {
 	}
 }
 
+// TestExchangeSession_DefaultSessionMaxAge tests that cookie age is limited by default.
+func TestExchangeSession_DefaultSessionMaxAge(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	cookieManager := NewMockCookieManager(ctrl)
+	server := NewServer(NewMockSessionStore(ctrl), NewMockKeyManager(ctrl), cookieManager, "test-issuer", "test-audience", 3600, nil)
+
+	cookieManager.EXPECT().
+		Decode("session_id", "expired-cookie", 86400).
+		Return("", errors.New("expired"))
+
+	_, err := server.ExchangeSession(context.Background(), &stsv1.ExchangeRequest{SessionCookie: "expired-cookie"})
+	if status.Code(err) != codes.InvalidArgument {
+		t.Errorf("Expected InvalidArgument, got: %v", err)
+	}
+}
+
 // TestExchangeSession_WithOpenIDClaims tests that session claims are forwarded to MintToken
 func TestExchangeSession_WithOpenIDClaims(t *testing.T) {
 	ctrl := gomock.NewController(t)

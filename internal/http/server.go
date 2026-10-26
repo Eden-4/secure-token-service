@@ -83,12 +83,10 @@ type Server struct {
 
 const defaultAuthProvider = "oidc"
 
-const defaultSessionExpiry = 24 * time.Hour
-
 // sessionLifetime returns the configured session lifetime, or the default when unset.
 func (s *Server) sessionLifetime() time.Duration {
 	if s.sessionExpiry <= 0 {
-		return defaultSessionExpiry
+		return constants.DefaultSessionExpiry
 	}
 	return s.sessionExpiry
 }
